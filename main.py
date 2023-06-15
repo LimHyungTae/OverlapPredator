@@ -89,7 +89,7 @@ if __name__ == '__main__':
                                         shuffle=False,
                                         num_workers=1,
                                         neighborhood_limits=neighborhood_limits)
-    
+
     # create evaluation metrics
     config.desc_loss = MetricLoss(config)
     trainer = get_trainer(config)

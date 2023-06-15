@@ -23,8 +23,8 @@ class KITTIDataset(Dataset):
     def __init__(self,config,split,data_augmentation=True):
         super(KITTIDataset,self).__init__()
         self.config = config
-        self.root = os.path.join(config.root,'dataset')
-        self.icp_path = os.path.join(config.root,'icp')
+        self.root = os.path.join(config.root, 'sequences')
+        self.icp_path = os.path.join(config.root, 'icp')
         if not os.path.exists(self.icp_path):
             os.makedirs(self.icp_path)
         self.voxel_size = config.first_subsampling_dl
@@ -51,7 +51,8 @@ class KITTIDataset(Dataset):
         subset_names = open(self.DATA_FILES[split]).read().split()
         for dirname in subset_names:
             drive_id = int(dirname)
-            fnames = glob.glob(self.root + '/sequences/%02d/velodyne/*.bin' % drive_id)
+            print("\033[1;32m" + self.root + "\033[0m")
+            fnames = glob.glob(self.root + '/%02d/velodyne/*.bin' % drive_id)
             assert len(fnames) > 0, f"Make sure that the path {self.root} has data {dirname}"
             inames = sorted([int(os.path.split(fname)[-1][:-4]) for fname in fnames])
 
@@ -78,8 +79,8 @@ class KITTIDataset(Dataset):
                     curr_time = next_time + 1
 
         # remove bad pairs
-        if split=='test':
-            self.files.remove((8, 15, 58))
+        # if split=='test':
+        #     self.files.remove((8, 15, 58))
         print(f'Num_{split}: {len(self.files)}')
 
 
@@ -107,17 +108,25 @@ class KITTIDataset(Dataset):
         filename = self.icp_path + '/' + key + '.npy'
         if key not in self.kitti_icp_cache:
             if not os.path.exists(filename):
-                print('missing ICP files, recompute it')
+                # Original version of Predator
+                # print('missing ICP files, recompute it')
+                # M = (self.velo2cam @ positions[0].T @ np.linalg.inv(positions[1].T)
+                #             @ np.linalg.inv(self.velo2cam)).T
+                # xyz0_t = self.apply_transform(xyz0, M)
+                # pcd0 = to_o3d_pcd(xyz0_t)
+                # pcd1 = to_o3d_pcd(xyz1)
+                # reg = open3d.registration.registration_icp(pcd0, pcd1, 0.2, np.eye(4),
+                #                                         open3d.registration.TransformationEstimationPointToPoint(),
+                #                                         open3d.registration.ICPConvergenceCriteria(max_iteration=200))
+                # pcd0.transform(reg.transformation)
+                # M2 = M @ reg.transformation
+                # np.save(filename, M2)
+
+                # # Modified version for Quatro++ evaluation
+                print('Recompute rel pose!')
                 M = (self.velo2cam @ positions[0].T @ np.linalg.inv(positions[1].T)
-                            @ np.linalg.inv(self.velo2cam)).T
-                xyz0_t = self.apply_transform(xyz0, M)
-                pcd0 = to_o3d_pcd(xyz0_t)
-                pcd1 = to_o3d_pcd(xyz1)
-                reg = open3d.registration.registration_icp(pcd0, pcd1, 0.2, np.eye(4),
-                                                        open3d.registration.TransformationEstimationPointToPoint(),
-                                                        open3d.registration.ICPConvergenceCriteria(max_iteration=200))
-                pcd0.transform(reg.transformation)
-                M2 = M @ reg.transformation
+                     @ np.linalg.inv(self.velo2cam)).T
+                M2 = M
                 np.save(filename, M2)
             else:
                 M2 = np.load(filename)
@@ -128,8 +137,8 @@ class KITTIDataset(Dataset):
 
         # refined pose is denoted as trans
         tsfm = M2
-        rot = tsfm[:3,:3]
-        trans = tsfm[:3,3][:,None]
+        rot = tsfm[:3, :3]
+        trans = tsfm[:3, 3][:, None]
 
         # voxelize the point clouds here
         pcd0 = to_o3d_pcd(xyz0)
@@ -204,7 +213,7 @@ class KITTIDataset(Dataset):
 
     def get_video_odometry(self, drive, indices=None, ext='.txt', return_all=False):
         if self.IS_ODOMETRY:
-            data_path = self.root + '/poses/%02d.txt' % drive
+            data_path = self.root + '/%02d/poses.txt' % drive
             if data_path not in self.kitti_cache:
                 self.kitti_cache[data_path] = np.genfromtxt(data_path)
             if return_all:
@@ -220,7 +229,7 @@ class KITTIDataset(Dataset):
 
     def _get_velodyne_fn(self, drive, t):
         if self.IS_ODOMETRY:
-            fname = self.root + '/sequences/%02d/velodyne/%06d.bin' % (drive, t)
+            fname = self.root + '/%02d/velodyne/%06d.bin' % (drive, t)
         return fname
 
     def get_position_transform(self, pos0, pos1, invert=False):

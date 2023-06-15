@@ -61,7 +61,7 @@ optimiser:
 dataset:
   dataset: kitti
   benchmark: odometryKITTI
-  root: 
+  root: /kitti
   batch_size: 1 
   num_workers: 6
   augment_noise: 0.01
