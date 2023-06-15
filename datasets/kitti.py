@@ -24,7 +24,7 @@ class KITTIDataset(Dataset):
         super(KITTIDataset,self).__init__()
         self.config = config
         self.root = os.path.join(config.root, 'sequences')
-        self.icp_path = os.path.join(config.root, 'icp')
+        self.icp_path = os.path.join("./data/KITTI", 'icp')
         if not os.path.exists(self.icp_path):
             os.makedirs(self.icp_path)
         self.voxel_size = config.first_subsampling_dl
