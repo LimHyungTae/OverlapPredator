@@ -3,8 +3,13 @@ This repository represents the official implementation of the paper:
 
 ### [PREDATOR: Registration of 3D Point Clouds with Low Overlap](https://arxiv.org/abs/2011.13005)
 
-\*[Shengyu Huang](https://shengyuh.github.io), \*[Zan Gojcic](https://zgojcic.github.io/), [Mikhail Usvyatsov](https://aelphy.github.io), [Andreas Wieser](https://gseg.igp.ethz.ch/people/group-head/prof-dr--andreas-wieser.html), [Konrad Schindler](https://prs.igp.ethz.ch/group/people/person-detail.schindler.html)\
-|[ETH Zurich](https://igp.ethz.ch/) | \* Equal contribution
+---
+
+```commandline
+docker run -it -e "DISPLAY=$DISPLAY" -v="/tmp/.X11-unix:/tmp/.X11-unix:rw" -v /home/shapelim/git/OverlapPredator:/OverlapPredator -v /media/shapelim/UX960NVMe11/kitti_semantic/dataset:/kitti --gpus all --privileged --rm --ipc=host -it fc01d1b2730b /bin/bash
+```
+
+---
 
 For implementation using MinkowskiEngine backbone, please check [this](https://github.com/ShengyuH/OverlapPredator.Mink)
 
