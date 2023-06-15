@@ -37,6 +37,9 @@ class KITTIDataset(Dataset):
         self.augment_scale_max = config.augment_scale_max
         self.augment_scale_min = config.augment_scale_min
 
+        self.use_preprocessed_file = config.use_preprocessed_file
+        self.txt_path = config.txt_path
+
         # Initiate containers
         self.files = []
         self.kitti_icp_cache = {}
@@ -50,6 +53,7 @@ class KITTIDataset(Dataset):
 
         subset_names = open(self.DATA_FILES[split]).read().split()
         for dirname in subset_names:
+            print("\033[1;31mFUCK!\033[0m")
             drive_id = int(dirname)
             print("\033[1;32m" + self.root + "\033[0m")
             fnames = glob.glob(self.root + '/%02d/velodyne/*.bin' % drive_id)
@@ -64,19 +68,33 @@ class KITTIDataset(Dataset):
             pdist = np.sqrt(pdist.sum(-1)) 
 
             ######################################
-            # D3Feat script to generate test pairs
-            more_than_10 = pdist > 10
-            curr_time = inames[0]
-            while curr_time in inames:
-                next_time = np.where(more_than_10[curr_time][curr_time:curr_time + 100])[0]
-                if len(next_time) == 0:
-                    curr_time += 1
-                else:
-                    next_time = next_time[0] + curr_time - 1
+            if (self.use_preprocessed_file and drive_id in [0, 2, 5, 6, 7, 8]):
+                with open(os.path.join(self.txt_path, '%02d' % drive_id, 'groundtruths.txt'), 'r') as f:
+                    lines_list = f.readlines()
+                    for i, line_str in enumerate(lines_list):
+                        if i == 0:
+                            # skip the header line
+                            continue
+                        line_splitted = line_str.split()
+                        anc_idx = int(line_splitted[0])
+                        pos_idx = int(line_splitted[1])
 
-                if next_time in inames:
-                    self.files.append((drive_id, curr_time, next_time))
-                    curr_time = next_time + 1
+                        self.files.append((drive_id, anc_idx, pos_idx))
+
+            # D3Feat script to generate test pairs
+            else:
+                more_than_10 = pdist > 10
+                curr_time = inames[0]
+                while curr_time in inames:
+                    next_time = np.where(more_than_10[curr_time][curr_time:curr_time + 100])[0]
+                    if len(next_time) == 0:
+                        curr_time += 1
+                    else:
+                        next_time = next_time[0] + curr_time - 1
+
+                    if next_time in inames:
+                        self.files.append((drive_id, curr_time, next_time))
+                        curr_time = next_time + 1
 
         # remove bad pairs
         # if split=='test':

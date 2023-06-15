@@ -131,7 +131,7 @@ class KITTITester(Trainer):
         rot_gt = np.array(rot_gt)
         trans_gt = np.array(trans_gt)[:,:,0]
 
-        rot_threshold = 5
+        rot_threshold = 10
         trans_threshold = 2
 
         np.savez(f'{self.snapshot_dir}/results',rot_est=rot_est, rot_gt=rot_gt, trans_est = trans_est, trans_gt = trans_gt)
